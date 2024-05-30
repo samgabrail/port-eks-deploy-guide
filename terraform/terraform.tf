@@ -3,10 +3,10 @@
 
 terraform {
   cloud {
-    organization = "your_org_name"
+    organization = "Demo-tfc-organization"
 
     workspaces {
-      name = "your_workspace_name"
+      name = "port-eks-deploy-guide"
     }
   }
 
