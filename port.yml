@@ -1,6 +1,6 @@
 identifier: BigBug
 title: BigBug
-blueprint: Issue
+blueprint: githubIssue
 properties:
   creator: Anuj
   assignees: [Jonathan, Anuj]
