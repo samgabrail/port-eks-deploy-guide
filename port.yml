@@ -3,7 +3,7 @@ title: BigBug
 blueprint: githubIssue
 properties:
   creator: Anuj
-  assignees: [Jonathan, Anuj]
+  assignees: ["Jonathan","Anuj"]
 relations:
   service: port-eks-deploy-guide
  
