@@ -1,0 +1,9 @@
+identifier: BigBug
+title: BigBug
+blueprint: githubIssue
+properties:
+  creator: Anuj
+  assignees: ["Jonathan","Juna"]
+relations:
+  service: port-eks-deploy-guide
+ 
