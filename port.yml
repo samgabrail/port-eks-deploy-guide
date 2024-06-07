@@ -1,0 +1,10 @@
+identifier: BigBug
+title: BigBug
+blueprint: Issue
+properties:
+  creator: Anuj
+  assignees: [Jonathan, Anuj]
+  myUrlProp: https://google.com
+relations:
+  mySingleRelation: Service
+ 
