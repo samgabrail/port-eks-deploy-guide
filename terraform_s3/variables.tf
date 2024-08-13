@@ -13,6 +13,6 @@ variable "bucket_name" {
 variable "blueprint_name" {
   description = "Name of the blueprint in Port"
   type        = string
-  default     = "s_3_bucket"
+  default     = "s3"
 }
 

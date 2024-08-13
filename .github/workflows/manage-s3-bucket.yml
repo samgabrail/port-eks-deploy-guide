@@ -52,6 +52,8 @@ jobs:
             - name: "/Terraform/terraform-credentials"
               output-name: "aws_dynamic_secret"
 
+          # Will need to add the static secrets for accessing Port.
+
       - name: Create a log message (apply)
         if: ${{ github.event.inputs.action == 'apply' }}
         uses: port-labs/port-github-action@v1
