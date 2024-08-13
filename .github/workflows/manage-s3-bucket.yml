@@ -1,0 +1,117 @@
+name: Manage S3 Bucket
+
+on:
+  workflow_dispatch:
+    inputs:
+      bucket_name:
+        description: "Name of the S3 Bucket"
+        required: true
+      region:
+        description: "AWS Region for the bucket"
+        required: true
+      action:
+        description: "Action to perform (apply/destroy)"
+        required: true
+        default: "apply"
+      port_payload:
+        required: true
+        description: "Port's payload (who triggered, context, etc...)"
+        type: string
+
+
+jobs:
+  manage_bucket:
+    permissions: 
+      id-token: write
+      contents: read
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform_s3
+
+    if: ${{ github.event.inputs.action == 'apply' || github.event.inputs.action == 'destroy' }}
+
+    # env:
+    #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #   PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+    #   PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Fetch dynamic secrets from Akeyless
+        id: fetch-dynamic-secrets
+        uses: akeyless-community/akeyless-github-action@v1.1.1
+        with:
+          access-id: ${{ vars.AKEYLESS_ACCESS_ID }}
+          access-type: jwt
+          dynamic-secrets: |
+            - name: "/Terraform/terraform-credentials"
+              output-name: "aws_dynamic_secret"
+
+      - name: Create a log message (apply)
+        if: ${{ github.event.inputs.action == 'apply' }}
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_payload).context.runId}}
+          logMessage: "Initiating creation of S3 Bucket: ${{ inputs.bucket_name }}."
+
+      # Export Dynamic Secret's keys to env vars
+      - name: Export Secrets to Environment
+        run: |
+          echo '${{ steps.fetch-dynamic-secrets.outputs.aws_dynamic_secret }}' | jq -r 'to_entries|map("AWS_\(.key|ascii_upcase)=\(.value|tostring)")|.[]' >> $GITHUB_ENV
+
+      # Setup AWS CLI
+      - name: Configure AWS Credentials
+        run: |
+          env | grep -i aws
+          aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Generate backend.hcl
+        run: |
+          echo "key = \"workshop1-${GITHUB_ACTOR}/terraform.tfstate\"" > backend.hcl
+          sleep 30 # Wait for AWS to assign IAM permissions to the credentials
+
+      - name: Terraform Init
+        run: terraform init -backend-config=backend.hcl
+
+      - name: Terraform Format
+        run: terraform fmt
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Apply or Destroy
+        run: |
+          if [ "${{ github.event.inputs.action }}" == "apply" ]; then
+            terraform apply -auto-approve;
+          elif [ "${{ github.event.inputs.action }}" == "destroy" ]; then
+            terraform destroy -auto-approve;
+          fi
+        env:
+          TF_VAR_bucket_name: ${{ github.event.inputs.bucket_name }}
+          TF_VAR_region: ${{ github.event.inputs.region }}
+          TF_VAR_port_run_id: ${{ fromJson(inputs.port_payload).context.runId }}
+      
+      - name: Create a log message (post-action)
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_payload).context.runId}}
+          logMessage: "${
+            if eq(github.event.inputs.action, 'apply')
+              'S3 Bucket creation has been completed: ${{ github.event.inputs.bucket_name }}.'
+            else
+              'S3 Bucket destruction has been completed: ${{ github.event.inputs.bucket_name }}.'
+            }"
