@@ -117,7 +117,7 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_payload).context.runId}}
-          logMessage: 'S3 Bucket creation has been completed: ${{ github.event.inputs.bucket_name }}.'
+          logMessage: 'S3 Bucket creation has completed and here is its name: ${{ github.event.inputs.bucket_name }}.'
             
       - name: Create a log message (post-action)
         uses: port-labs/port-github-action@v1
@@ -128,4 +128,4 @@ jobs:
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_payload).context.runId}}
-          logMessage: 'S3 Bucket destruction has been completed: ${{ github.event.inputs.bucket_name }}.'
+          logMessage: 'S3 Bucket destruction has completed for bucket name: ${{ github.event.inputs.bucket_name }}.'

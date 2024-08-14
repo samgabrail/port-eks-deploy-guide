@@ -83,15 +83,22 @@ jobs:
 
       - name: Create a log message (post-action)
         uses: port-labs/port-github-action@v1
+        if: ${{ github.event.inputs.action == 'apply' }}
         with:
           clientId: ${{ secrets.PORT_CLIENT_ID }}
           clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_payload).context.runId}}
-          logMessage: "${
-            if eq(github.event.inputs.action, 'apply')
-              'EKS cluster creation has been completed: ${{ github.event.inputs.cluster_name }}.'
-            else
-              'EKS cluster destruction has been completed: ${{ github.event.inputs.cluster_name }}.'
-            }"
+          logMessage: 'EKS cluster creation has been completed and here is its name: ${{ github.event.inputs.cluster_name }}.'
+
+      - name: Create a log message (post-action)
+        uses: port-labs/port-github-action@v1
+        if: ${{ github.event.inputs.action == 'destroy' }}
+        with:
+          clientId: ${{ secrets.PORT_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: PATCH_RUN
+          runId: ${{fromJson(inputs.port_payload).context.runId}}
+          logMessage: 'EKS cluster destruction has been completed for this cluster name: ${{ github.event.inputs.cluster_name }}.'
