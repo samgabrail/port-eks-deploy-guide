@@ -35,31 +35,36 @@ jobs:
     # env:
     #   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
     #   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-    #   PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-    #   PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+    #   PORT_CLIENT_ID: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_ID }}
+    #   PORT_CLIENT_SECRET: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_SECRET }}
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
       - name: Fetch dynamic secrets from Akeyless
-        id: fetch-dynamic-secrets
+        id: fetch-akeyless-secrets
         uses: akeyless-community/akeyless-github-action@v1.1.1
         with:
           access-id: ${{ vars.AKEYLESS_ACCESS_ID }}
           access-type: jwt
+          static-secrets: |
+            - name: "/Infra/Port/PORT_CLIENT_ID"
+              output-name: "PORT_CLIENT_ID"
+            - name: "/Infra/Port/PORT_CLIENT_SECRET"
+              output-name: "PORT_CLIENT_SECRET"
           dynamic-secrets: |
-            - name: "/Terraform/terraform-credentials"
+            - name: "/Clouds/Workshops/AWS_Lab0"
               output-name: "aws_dynamic_secret"
 
-          # Will need to add the static secrets for accessing Port.
+          # echo "my_first_secret: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_SECRET }}" >> secrets.txt
 
       - name: Create a log message (apply)
         if: ${{ github.event.inputs.action == 'apply' }}
         uses: port-labs/port-github-action@v1
         with:
-          clientId: ${{ secrets.PORT_CLIENT_ID }}
-          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          clientId: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_ID }}
+          clientSecret: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_payload).context.runId}}
@@ -68,7 +73,7 @@ jobs:
       # Export Dynamic Secret's keys to env vars
       - name: Export Secrets to Environment
         run: |
-          echo '${{ steps.fetch-dynamic-secrets.outputs.aws_dynamic_secret }}' | jq -r 'to_entries|map("AWS_\(.key|ascii_upcase)=\(.value|tostring)")|.[]' >> $GITHUB_ENV
+          echo '${{ steps.fetch-akeyless-secrets.outputs.aws_dynamic_secret }}' | jq -r 'to_entries|map("AWS_\(.key|ascii_upcase)=\(.value|tostring)")|.[]' >> $GITHUB_ENV
 
       # Setup AWS CLI
       - name: Configure AWS Credentials
@@ -106,8 +111,8 @@ jobs:
       - name: Create a log message (post-action)
         uses: port-labs/port-github-action@v1
         with:
-          clientId: ${{ secrets.PORT_CLIENT_ID }}
-          clientSecret: ${{ secrets.PORT_CLIENT_SECRET }}
+          clientId: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_ID }}
+          clientSecret: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_SECRET }}
           baseUrl: https://api.getport.io
           operation: PATCH_RUN
           runId: ${{fromJson(inputs.port_payload).context.runId}}
