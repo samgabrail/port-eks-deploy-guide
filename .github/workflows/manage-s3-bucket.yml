@@ -54,7 +54,7 @@ jobs:
             - name: "/Infra/Port/PORT_CLIENT_SECRET"
               output-name: "PORT_CLIENT_SECRET"
           dynamic-secrets: |
-            - name: "/Clouds/Workshops/AWS_Lab0"
+            - name: "/Clouds/AWS_Lab0_Demos"
               output-name: "aws_dynamic_secret"
 
           # echo "my_first_secret: ${{ steps.fetch-akeyless-secrets.outputs.PORT_CLIENT_SECRET }}" >> secrets.txt
