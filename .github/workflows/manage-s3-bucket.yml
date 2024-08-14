@@ -48,11 +48,11 @@ jobs:
         with:
           access-id: ${{ vars.AKEYLESS_ACCESS_ID }}
           access-type: jwt
-          # static-secrets: |
-          #   - name: "/Infra/Port/PORT_CLIENT_ID"
-          #     output-name: "PORT_CLIENT_ID"
-          #   - name: "/Infra/Port/PORT_CLIENT_SECRET"
-          #     output-name: "PORT_CLIENT_SECRET"
+          static-secrets: |
+            - name: "/Infra/Port/PORT_CLIENT_ID"
+              output-name: "PORT_CLIENT_ID"
+            - name: "/Infra/Port/PORT_CLIENT_SECRET"
+              output-name: "PORT_CLIENT_SECRET"
           dynamic-secrets: |
             - name: "/Clouds/Workshops/AWS_Lab0"
               output-name: "aws_dynamic_secret"
